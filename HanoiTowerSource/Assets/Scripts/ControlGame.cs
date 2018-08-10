@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ControlGame : MonoBehaviour {
+public class ControlGame : MonoBehaviour
+{
     public Transform cameraObj;
     public Transform plane;
     public int kDisk;
@@ -10,11 +11,10 @@ public class ControlGame : MonoBehaviour {
     private GameObject[] columnGO = new GameObject[kColumn];
     private List<GameObject> diskGO = new List<GameObject>();
 
-    public GameObject columnPrefab;
-    public GameObject diskPrefab;
+    public GameObject prefabObj;
 
-    public float scaleDiskY = 0.2f;
-    public float scaleDiskX = 0.4f;
+    public float scaleDiskY;
+    public float scaleDiskX;
 
     public float speed;
 
@@ -31,21 +31,22 @@ public class ControlGame : MonoBehaviour {
     void CreateColumns()
     {
         float sizeColumnY = (scaleDiskY * kDisk + scaleDiskY) * 2;
-        for (int i = 0; i < kColumn;i++)
+        for (int i = 0; i < kColumn; i++)
         {
-            columnGO[i] = Instantiate(columnPrefab);
+            columnGO[i] = Instantiate(prefabObj);
             columnGO[i].transform.localScale = new Vector3(1, sizeColumnY, 1);
-            columnGO[i].transform.position = new Vector3(kDisk*i, sizeColumnY, 0);
+            columnGO[i].transform.position = new Vector3(kDisk * i, sizeColumnY, 0);
+            columnGO[i].name = "column" + i;
         }
     }
     void CreateDisks()
     {
-        for(int i = 0; i<kDisk; i++)
+        for (int i = 0; i < kDisk; i++)
         {
-            diskGO.Add(Instantiate(diskPrefab));
+            diskGO.Add(Instantiate(prefabObj));
             float sizeXZ = (1 + scaleDiskX) + scaleDiskX * (kDisk - i);
             diskGO[i].transform.localScale = new Vector3(sizeXZ, scaleDiskY, sizeXZ);
-            diskGO[i].transform.position = new Vector3(0, scaleDiskY + scaleDiskY*2*i , 0);
+            diskGO[i].transform.position = new Vector3(0, scaleDiskY + scaleDiskY * 2 * i, 0);
             diskGO[i].GetComponent<MeshRenderer>().material.color = Random.ColorHSV();
             diskGO[i].name = "Disk" + i.ToString();
             diskGO[i].transform.SetParent(columnGO[0].transform);
@@ -53,7 +54,7 @@ public class ControlGame : MonoBehaviour {
     }
     void SetPosCamera()
     {
-        cameraObj.position = new Vector3(columnGO[1].transform.position.x, columnGO[1].transform.position.y*4, -1*kDisk*2);
+        cameraObj.position = new Vector3(columnGO[1].transform.position.x, columnGO[1].transform.position.y * 4, -1 * kDisk * 2);
     }
     void SetTransformPlane()
     {
@@ -93,30 +94,19 @@ public class ControlGame : MonoBehaviour {
         yield return null;
     }
 
-    IEnumerator MoveFull(Transform column1,Transform column2)
+    IEnumerator MoveFull(Transform column1, Transform column2)
     {
-        Transform diskColumn1 = GetLastDiskColumn(column1);
-        Transform diskColumn2 = GetLastDiskColumn(column2);
-        if (diskColumn1 && (!diskColumn2 || diskColumn1.localScale.x < diskColumn2.localScale.x))
-        {
-            yield return StartCoroutine(MoveTo(diskColumn1, new Vector3(column1.position.x,column1.position.y * 2, 0)));
-            yield return StartCoroutine(MoveTo(diskColumn1, new Vector3(column2.position.x,column2.position.y * 2, 0)));
-            Vector3 endPos = diskColumn2 ? diskColumn2.position + new Vector3(0, scaleDiskY, 0) : new Vector3(column2.position.x, scaleDiskY, 0);
-            yield return StartCoroutine(MoveTo(diskColumn1, endPos));
-            diskColumn1.SetParent(column2);
-        }
-        else
-        {
-            yield return StartCoroutine(MoveTo(diskColumn2, new Vector3(column2.position.x, column2.position.y * 2, 0)));
-            yield return StartCoroutine(MoveTo(diskColumn2, new Vector3(column1.position.x, column1.position.y * 2, 0)));
-            Vector3 endPos = diskColumn1 ? diskColumn1.position + new Vector3(0, scaleDiskY, 0) : new Vector3(column1.position.x, scaleDiskY, 0);
-            yield return StartCoroutine(MoveTo(diskColumn2, endPos));
-            diskColumn2.SetParent(column1);
-        }
+        Transform columnTo, columnFrom;
+        Transform movableDisk = GetMovableDisk(column1, column2, out columnTo, out columnFrom);
+        yield return StartCoroutine(MoveTo(movableDisk, new Vector3(columnTo.position.x, columnTo.position.y * 2, 0)));
+        yield return StartCoroutine(MoveTo(movableDisk, new Vector3(columnFrom.position.x, columnFrom.position.y * 2, 0)));
+        Vector3 endPos = GetLastDiskColumn(columnFrom) ? GetLastDiskColumn(columnFrom).position + new Vector3(0, scaleDiskY, 0) : new Vector3(columnFrom.position.x, scaleDiskY, 0);
+        yield return StartCoroutine(MoveTo(movableDisk, endPos));
+        movableDisk.SetParent(columnFrom);
     }
 
 
-    IEnumerator MoveTo(Transform disk,Vector3 target)
+    IEnumerator MoveTo(Transform disk, Vector3 target)
     {
         while ((target - disk.position).magnitude > 0.001f)
         {
@@ -125,6 +115,23 @@ public class ControlGame : MonoBehaviour {
         }
     }
 
+    Transform GetMovableDisk(Transform column1, Transform column2, out Transform columnTo, out Transform columnFrom)
+    {
+        Transform diskColumn1 = GetLastDiskColumn(column1);
+        Transform diskColumn2 = GetLastDiskColumn(column2);
+        if (diskColumn1 && (!diskColumn2 || diskColumn1.localScale.x < diskColumn2.localScale.x))
+        {
+            columnTo = column1;
+            columnFrom = column2;
+            return diskColumn1;
+        }
+        else
+        {
+            columnTo = column2;
+            columnFrom = column1;
+            return diskColumn2;
+        }
+    }
     Transform GetLastDiskColumn(Transform column)
     {
         if (column.childCount != 0)
