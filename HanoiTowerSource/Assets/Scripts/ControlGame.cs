@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class ControlGame : MonoBehaviour
 {
+    public ControlUI controlUI;
     public Transform cameraObj;
     public Transform plane;
-    public int kDisk;
+    [HideInInspector] public int kDisk;
     private static int kColumn = 3;
     private GameObject[] columnGO = new GameObject[kColumn];
     private List<GameObject> diskGO = new List<GameObject>();
@@ -90,7 +91,7 @@ public class ControlGame : MonoBehaviour
             }
             yield return StartCoroutine(MoveFull(columnGO[1].transform, columnGO[2].transform));
         }
-        Debug.LogError("решено!");
+        controlUI.DoneTask();
         yield return null;
     }
 

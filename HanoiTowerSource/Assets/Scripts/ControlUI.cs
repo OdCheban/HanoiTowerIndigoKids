@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class ControlUI : MonoBehaviour {
     public ControlGame controlGame;
     public Text textField;
-    public Text errorUI;
+    public Text infoUI;
     public InputField Input;
     public Button btnStart;
     int n;
@@ -15,22 +15,22 @@ public class ControlUI : MonoBehaviour {
     {
         if (!Int32.TryParse(Input.text, out n))
         {
-            StartCoroutine(ShowError("введите число"));
+            StartCoroutine(ShowInfo("введите число"));
             return false;
         }
         if (n < 3)
         {
-            StartCoroutine(ShowError("дисков должно быть > 3"));
+            StartCoroutine(ShowInfo("дисков должно быть > 3"));
             return false;
         }
         if (n == 0)
         {
-            StartCoroutine(ShowError("введите число(>0)"));
+            StartCoroutine(ShowInfo("введите число(>0)"));
             return false;
         }
         if (n > 1000)
         {
-            StartCoroutine(ShowError("нужно повысить дальность отрисовки(ClippingPlanes->Far)"));
+            StartCoroutine(ShowInfo("нужно повысить дальность отрисовки(ClippingPlanes->Far)"));
             return false;
         }
 
@@ -45,11 +45,16 @@ public class ControlUI : MonoBehaviour {
         }
     }
 
-    IEnumerator ShowError(string e)
+    IEnumerator ShowInfo(string e)
     {
-        errorUI.text = e;
+        infoUI.text = e;
         yield return new WaitForSeconds(1.0f);
-        errorUI.text = "";
+        infoUI.text = "";
         yield return null;
+    }
+
+    public void DoneTask()
+    {
+        StartCoroutine(ShowInfo("Задача выполнена"));
     }
 }
