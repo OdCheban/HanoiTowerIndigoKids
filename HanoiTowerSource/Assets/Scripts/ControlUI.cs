@@ -9,9 +9,10 @@ public class ControlUI : MonoBehaviour {
     public Button btnStart;
     int n;
 
-    public void StartGame()
+    public void ReadyGame()
     {
-        controlGame.Kdisk = n;
+        controlGame.StopGame();
+        controlGame.StartGame(n);
     }
 
     public void ReadField()
